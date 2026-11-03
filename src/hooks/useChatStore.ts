@@ -10,6 +10,8 @@ interface ChatState {
   customModels: AIModel[];
   settings: AppSettings;
   activeModelId: string;
+  remoteModels: AIModel[]; // AI Studio catalog fetched from the API, cached across sessions
+  remoteModelsAt: number | null;
   isHydrated: boolean;
   lastSavedAt: number | null;
 
@@ -26,6 +28,7 @@ interface ChatState {
   addCustomModel: (model: AIModel) => void;
   removeCustomModel: (id: string) => void;
   setActiveModel: (id: string) => void;
+  setRemoteModels: (models: AIModel[]) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   saveSnapshotNow: () => void;
   importHistory: (data: any, mode: 'merge' | 'replace') => void;
@@ -57,6 +60,8 @@ export const useChatStore = create<ChatState>()(
         imageAspectRatio: '1:1',
       },
       activeModelId: 'gemini-2.5-flash',
+      remoteModels: [],
+      remoteModelsAt: null,
       isHydrated: false,
       lastSavedAt: Date.now(),
 
@@ -213,6 +218,8 @@ export const useChatStore = create<ChatState>()(
         })),
 
       setActiveModel: (id) => set({ activeModelId: id }),
+
+      setRemoteModels: (models) => set({ remoteModels: models, remoteModelsAt: Date.now() }),
 
       updateSettings: (newSettings) =>
         set((state) => ({

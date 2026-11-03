@@ -6,21 +6,31 @@ const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 // Only content generation on a model id is relayed, so the shared key cannot be used for anything else.
 const AI_STUDIO_ALLOWED_PATH = /^models\/[A-Za-z0-9._-]+:generateContent$/;
 
-async function handleAiStudio(endpointPath: unknown, payload: unknown, res: VercelResponse) {
+async function handleAiStudio(
+  endpointPath: unknown,
+  payload: unknown,
+  method: unknown,
+  res: VercelResponse
+) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY' });
   }
-  if (typeof endpointPath !== 'string' || !AI_STUDIO_ALLOWED_PATH.test(endpointPath)) {
+  const isList = method === 'GET' && endpointPath === 'models';
+  if (!isList && (typeof endpointPath !== 'string' || !AI_STUDIO_ALLOWED_PATH.test(endpointPath))) {
     return res.status(400).json({ error: 'endpointPath not allowed' });
   }
 
   try {
-    const response = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(payload ?? {}),
-    });
+    const response = isList
+      ? await fetch(`${AI_STUDIO_BASE_URL}/models?pageSize=1000`, {
+          headers: { 'x-goog-api-key': apiKey },
+        })
+      : await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(payload ?? {}),
+        });
     const rawText = await response.text();
     if (!response.ok) {
       let message = `Google API Error (${response.status}): ${response.statusText}`;
@@ -50,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (provider === 'aistudio') {
-    return handleAiStudio(endpointPath, payload, res);
+    return handleAiStudio(endpointPath, payload, method, res);
   }
 
   const apiKey =

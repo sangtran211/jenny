@@ -1,4 +1,5 @@
 import { AppSettings, Message } from '../types/chat';
+import type { RawAiStudioModel } from './modelCatalog';
 
 interface ApiContext {
   settings: AppSettings;
@@ -64,6 +65,25 @@ const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) =>
       ? 'https://us-central1-aiplatform.googleapis.com/v1'
       : 'https://aiplatform.googleapis.com/v1',
   };
+};
+
+// Lists the models the AI Studio key can use. Same key/proxy routing as generation requests.
+export const listAiStudioModels = async (settings: AppSettings): Promise<RawAiStudioModel[]> => {
+  let res: Response;
+  if (!getAiStudioKey(settings) && !isLocalhost()) {
+    res = await fetch('/api/jenny', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'aistudio', endpointPath: 'models', method: 'GET' }),
+    });
+  } else {
+    res = await fetch(`${AI_STUDIO_BASE_URL}/models?pageSize=1000`, {
+      headers: { 'x-goog-api-key': requireAiStudioKey(settings) },
+    });
+  }
+  if (!res.ok) await throwApiError(res);
+  const data = await res.json();
+  return Array.isArray(data.models) ? data.models : [];
 };
 
 const parseDataUri = (dataUri: string) => {

@@ -4,9 +4,11 @@ import { Header } from './components/Header';
 import { ChatViewport } from './components/ChatViewport';
 import { Composer } from './components/Composer';
 import { useChatStore } from './hooks/useChatStore';
+import { useModelCatalogSync } from './hooks/useModels';
 
 function App() {
   const { isHydrated } = useChatStore();
+  useModelCatalogSync();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   if (!isHydrated) {

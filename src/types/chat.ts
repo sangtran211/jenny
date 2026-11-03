@@ -7,6 +7,7 @@ export interface AIModel {
   description?: string;
   badge?: string;
   isCustom?: boolean;
+  providers?: ApiProvider[]; // which providers offer it; undefined = both
 }
 
 export type MessageRole = 'user' | 'model';

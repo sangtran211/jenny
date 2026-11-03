@@ -6,14 +6,16 @@ export const DEFAULT_MODELS: AIModel[] = [
     name: 'Gemini Flash (Latest)',
     capability: 'CHAT',
     badge: 'AI Studio • Alias',
-    description: 'Luôn trỏ tới bản Flash mới nhất của Google AI Studio (có lúc quá tải, trả 503).'
+    description: 'Luôn trỏ tới bản Flash mới nhất của Google AI Studio (có lúc quá tải, trả 503).',
+    providers: ['aistudio']
   },
   {
     id: 'gemini-pro-latest',
     name: 'Gemini Pro (Latest)',
     capability: 'CHAT',
     badge: 'Reasoning • AI Studio',
-    description: 'Luôn trỏ tới bản Pro mới nhất, dùng cho suy luận và lập trình phức tạp.'
+    description: 'Luôn trỏ tới bản Pro mới nhất, dùng cho suy luận và lập trình phức tạp.',
+    providers: ['aistudio']
   },
   {
     id: 'gemini-3-flash-preview',
@@ -62,21 +64,24 @@ export const DEFAULT_MODELS: AIModel[] = [
     name: 'Imagen 3.0 Generate',
     capability: 'IMAGE',
     badge: 'Photoreal',
-    description: 'Mô hình chuyên dụng tạo ảnh nghệ thuật và chân thực của Google.'
+    description: 'Mô hình chuyên dụng tạo ảnh nghệ thuật và chân thực của Google.',
+    providers: ['vertex']
   },
   {
     id: 'veo-3.1-lite-generate-001',
     name: 'Veo 3.1 Lite Video (LRO)',
     capability: 'VIDEO',
     badge: 'Video LRO',
-    description: 'Tạo video 16:9 bất đồng bộ (Long-Running Operation) qua Vertex AI.'
+    description: 'Tạo video 16:9 bất đồng bộ (Long-Running Operation) qua Vertex AI.',
+    providers: ['vertex']
   },
   {
     id: 'veo-3.0-generate-preview',
     name: 'Veo 3.0 Generate Preview',
     capability: 'VIDEO',
     badge: 'Cinema Video',
-    description: 'Tạo chuyển động điện ảnh chất lượng cao từ mô tả văn bản.'
+    description: 'Tạo chuyển động điện ảnh chất lượng cao từ mô tả văn bản.',
+    providers: ['vertex']
   },
   {
     id: 'gemini-3.1-flash-tts-preview',
