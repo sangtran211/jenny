@@ -10,6 +10,10 @@ const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 const isAiStudio = (settings: AppSettings) => (settings.provider ?? 'aistudio') === 'aistudio';
 
+const isLocalhost = () =>
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 const getAiStudioKey = (settings: AppSettings) =>
   settings.aiStudioApiKey?.trim() || import.meta.env.VITE_GEMINI_API_KEY || '';
 
@@ -42,11 +46,7 @@ const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) =>
     import.meta.env.VITE_JENNY_API_KEY ||
     DEFAULT_FALLBACK_KEY;
 
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  if (isLocalhost && customKey) {
+  if (isLocalhost() && customKey) {
     return {
       baseUrl: isUsCentral
         ? 'https://us-central1-aiplatform.googleapis.com/v1'
@@ -81,6 +81,21 @@ const executeRequest = async (
   isUsCentral = false
 ) => {
   if (isAiStudio(context.settings)) {
+    // A key in the browser (typed in Settings or VITE_GEMINI_API_KEY) goes direct to Google.
+    // With no client key on a deployed site, the server-side proxy supplies GEMINI_API_KEY instead.
+    if (!getAiStudioKey(context.settings) && !isLocalhost()) {
+      const res = await fetch('/api/jenny', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'aistudio', endpointPath, payload }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `API Error (Status ${res.status})`);
+      }
+      return res.json();
+    }
+
     const res = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
       method: 'POST',
       headers: {

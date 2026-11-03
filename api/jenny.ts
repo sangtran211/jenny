@@ -2,15 +2,55 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const DEFAULT_FALLBACK_KEY = 'YOUR_DEFAULT_FALLBACK_KEY_HERE'; // Replace with your actual default fallback key if needed
 
+const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+// Only content generation on a model id is relayed, so the shared key cannot be used for anything else.
+const AI_STUDIO_ALLOWED_PATH = /^models\/[A-Za-z0-9._-]+:generateContent$/;
+
+async function handleAiStudio(endpointPath: unknown, payload: unknown, res: VercelResponse) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY' });
+  }
+  if (typeof endpointPath !== 'string' || !AI_STUDIO_ALLOWED_PATH.test(endpointPath)) {
+    return res.status(400).json({ error: 'endpointPath not allowed' });
+  }
+
+  try {
+    const response = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify(payload ?? {}),
+    });
+    const rawText = await response.text();
+    if (!response.ok) {
+      let message = `Google API Error (${response.status}): ${response.statusText}`;
+      try {
+        message = JSON.parse(rawText)?.error?.message || message;
+      } catch {
+        // keep the generic message
+      }
+      return res.status(response.status).json({ error: message });
+    }
+    return res.status(200).json(JSON.parse(rawText));
+  } catch (error: any) {
+    console.error('AI Studio proxy error:', error);
+    return res.status(500).json({ error: error?.message || 'Internal Server Error' });
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { endpointPath, payload, method = 'POST', customApiKey } = req.body || {};
+  const { endpointPath, payload, method = 'POST', customApiKey, provider } = req.body || {};
 
   if (!endpointPath) {
     return res.status(400).json({ error: 'Missing endpointPath' });
+  }
+
+  if (provider === 'aistudio') {
+    return handleAiStudio(endpointPath, payload, res);
   }
 
   const apiKey =
