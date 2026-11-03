@@ -2,28 +2,27 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../hooks/useChatStore';
-import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2 } from 'lucide-react';
+import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2, RotateCcw } from 'lucide-react';
+import { API_ERROR_PREFIX } from '../constants/messages';
 import { cn } from '../lib/utils';
 import { generateTTS } from '../services/jennyApi';
-import { DEFAULT_MODELS, STARTER_PROMPTS } from '../constants/models';
+import { STARTER_PROMPTS } from '../constants/models';
+import { useModels } from '../hooks/useModels';
 
 export function ChatViewport() {
   const {
     conversations,
     activeConversationId,
     settings,
-    activeModelId,
-    customModels,
     setActiveModel,
   } = useChatStore();
+  const { allModels, activeModel } = useModels();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
   const messages = activeConversation?.messages || [];
-  const allModels = [...DEFAULT_MODELS, ...customModels];
-  const activeModel = allModels.find((m) => m.id === activeModelId) || DEFAULT_MODELS[0];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -60,7 +59,7 @@ export function ChatViewport() {
 
   const handleStarterClick = (promptText: string, cap: string) => {
     if (activeModel.capability !== cap) {
-      const matching = DEFAULT_MODELS.find((m) => m.capability === cap);
+      const matching = allModels.find((m) => m.capability === cap);
       if (matching) setActiveModel(matching.id);
     }
     const event = new CustomEvent('jenny-fill-prompt', { detail: promptText });
@@ -178,6 +177,15 @@ export function ChatViewport() {
                     {ttsLoadingId === msg.id ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
                     <span>Đọc giọng Jenny</span>
                   </button>
+                  {msg.text.startsWith(API_ERROR_PREFIX) && messages[i - 1]?.role === 'user' && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('jenny-fill-prompt', { detail: messages[i - 1].text }))}
+                      className="flex items-center gap-1 hover:text-accent-terracotta"
+                    >
+                      <RotateCcw size={12} />
+                      <span>Thử lại</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>

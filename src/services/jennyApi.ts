@@ -1,4 +1,6 @@
 import { AppSettings, Message } from '../types/chat';
+import type { RawAiStudioModel } from './modelCatalog';
+import { fetchWithRetry } from './http';
 
 interface ApiContext {
   settings: AppSettings;
@@ -9,6 +11,10 @@ const DEFAULT_FALLBACK_KEY = 'YOUR_DEFAULT_FALLBACK_KEY_HERE'; // Replace with y
 const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 const isAiStudio = (settings: AppSettings) => (settings.provider ?? 'aistudio') === 'aistudio';
+
+const isLocalhost = () =>
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 const getAiStudioKey = (settings: AppSettings) =>
   settings.aiStudioApiKey?.trim() || import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -42,11 +48,7 @@ const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) =>
     import.meta.env.VITE_JENNY_API_KEY ||
     DEFAULT_FALLBACK_KEY;
 
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  if (isLocalhost && customKey) {
+  if (isLocalhost() && customKey) {
     return {
       baseUrl: isUsCentral
         ? 'https://us-central1-aiplatform.googleapis.com/v1'
@@ -66,6 +68,25 @@ const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) =>
   };
 };
 
+// Lists the models the AI Studio key can use. Same key/proxy routing as generation requests.
+export const listAiStudioModels = async (settings: AppSettings): Promise<RawAiStudioModel[]> => {
+  let res: Response;
+  if (!getAiStudioKey(settings) && !isLocalhost()) {
+    res = await fetch('/api/jenny', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'aistudio', endpointPath: 'models', method: 'GET' }),
+    });
+  } else {
+    res = await fetch(`${AI_STUDIO_BASE_URL}/models?pageSize=1000`, {
+      headers: { 'x-goog-api-key': requireAiStudioKey(settings) },
+    });
+  }
+  if (!res.ok) await throwApiError(res);
+  const data = await res.json();
+  return Array.isArray(data.models) ? data.models : [];
+};
+
 const parseDataUri = (dataUri: string) => {
   const matches = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
   if (matches) {
@@ -81,7 +102,22 @@ const executeRequest = async (
   isUsCentral = false
 ) => {
   if (isAiStudio(context.settings)) {
-    const res = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
+    // A key in the browser (typed in Settings or VITE_GEMINI_API_KEY) goes direct to Google.
+    // With no client key on a deployed site, the server-side proxy supplies GEMINI_API_KEY instead.
+    if (!getAiStudioKey(context.settings) && !isLocalhost()) {
+      const res = await fetchWithRetry('/api/jenny', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'aistudio', endpointPath, payload }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `API Error (Status ${res.status})`);
+      }
+      return res.json();
+    }
+
+    const res = await fetchWithRetry(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -209,14 +245,20 @@ export const generateText = async (
       const streamUrl = useAiStudio
         ? `${AI_STUDIO_BASE_URL}/models/${model}:streamGenerateContent?alt=sse`
         : `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:streamGenerateContent?alt=sse&key=${customKey}`;
-      const response = await fetch(streamUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(useAiStudio && { 'x-goog-api-key': customKey }),
+      // No retries here: on failure the code below falls back to a normal request, which has them.
+      // Google holds the response headers until the first token, so a thinking model needs the full wait.
+      const response = await fetchWithRetry(
+        streamUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(useAiStudio && { 'x-goog-api-key': customKey }),
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+        { retryDelaysMs: [] }
+      );
 
       if (response.ok && response.body) {
         const reader = response.body.getReader();

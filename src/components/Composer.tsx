@@ -8,7 +8,8 @@ import {
   initiateVideoGen,
   pollVideoGen,
 } from '../services/jennyApi';
-import { DEFAULT_MODELS } from '../constants/models';
+import { useModels } from '../hooks/useModels';
+import { API_ERROR_PREFIX } from '../constants/messages';
 import { Attachment, ModelCapability } from '../types/chat';
 
 export function Composer() {
@@ -17,19 +18,16 @@ export function Composer() {
     createConversation,
     addMessage,
     updateMessage,
-    activeModelId,
     setActiveModel,
-    customModels,
     settings,
   } = useChatStore();
+  const { allModels, activeModel } = useModels();
 
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachment, setAttachment] = useState<{ type: 'image'; data: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const allModels = [...DEFAULT_MODELS, ...customModels];
-  const activeModel = allModels.find((m) => m.id === activeModelId) || DEFAULT_MODELS[0];
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -144,7 +142,7 @@ export function Composer() {
       }
     } catch (err: any) {
       updateMessage(convId, placeholderId, {
-        text: `⚠️ Lỗi gọi API (${activeModel.id}): ${err.message}`,
+        text: `${API_ERROR_PREFIX} (${activeModel.id}): ${err.message}`,
         isStreaming: false,
       });
     } finally {

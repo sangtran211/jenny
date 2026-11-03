@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Conversation, Message, AIModel, AppSettings } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
+import { PERSONAS } from '../constants/personas';
 
 interface ChatState {
   conversations: Conversation[];
@@ -9,6 +10,8 @@ interface ChatState {
   customModels: AIModel[];
   settings: AppSettings;
   activeModelId: string;
+  remoteModels: AIModel[]; // AI Studio catalog fetched from the API, cached across sessions
+  remoteModelsAt: number | null;
   isHydrated: boolean;
   lastSavedAt: number | null;
 
@@ -25,6 +28,7 @@ interface ChatState {
   addCustomModel: (model: AIModel) => void;
   removeCustomModel: (id: string) => void;
   setActiveModel: (id: string) => void;
+  setRemoteModels: (models: AIModel[]) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   saveSnapshotNow: () => void;
   importHistory: (data: any, mode: 'merge' | 'replace') => void;
@@ -49,13 +53,15 @@ export const useChatStore = create<ChatState>()(
         aiStudioApiKey: '',
         customApiKey: '',
         projectId: 'no-coop-300usd-project',
-        systemPrompt:
-          'Bạn là Jenny — trợ lý AI thông minh, tinh tế và chuẩn xác mang phong cách Editorial Atelier. Bạn hỗ trợ người dùng xuất sắc bằng tiếng Việt và tiếng Anh về lập trình (React, React Native, TypeScript, GIS/MapLibre, MCP, AI Agents), phân tích dữ liệu và sáng tạo đa phương thức.',
+        personaId: PERSONAS[0].id,
+        systemPrompt: PERSONAS[0].systemPrompt,
         ttsVoice: 'Puck',
         enableStreaming: true,
         imageAspectRatio: '1:1',
       },
       activeModelId: 'gemini-2.5-flash',
+      remoteModels: [],
+      remoteModelsAt: null,
       isHydrated: false,
       lastSavedAt: Date.now(),
 
@@ -212,6 +218,8 @@ export const useChatStore = create<ChatState>()(
         })),
 
       setActiveModel: (id) => set({ activeModelId: id }),
+
+      setRemoteModels: (models) => set({ remoteModels: models, remoteModelsAt: Date.now() }),
 
       updateSettings: (newSettings) =>
         set((state) => ({

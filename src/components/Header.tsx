@@ -1,21 +1,27 @@
 import { useState } from 'react';
 import { Settings, Plus, PanelLeft, Sparkles, ChevronDown } from 'lucide-react';
 import { useChatStore } from '../hooks/useChatStore';
-import { DEFAULT_MODELS } from '../constants/models';
+import { useModels } from '../hooks/useModels';
+import type { ModelCapability } from '../types/chat';
 import { ModelModal } from './ModelModal';
 import { SettingsModal } from './SettingsModal';
+
+const MODEL_GROUPS: { capability: ModelCapability; label: string }[] = [
+  { capability: 'CHAT', label: 'Chat & Suy Luận (Gemini)' },
+  { capability: 'IMAGE', label: 'Tạo Hình Ảnh (Imagen / Gemini Image)' },
+  { capability: 'VIDEO', label: 'Tạo Video Bất Đồng Bộ (Veo LRO)' },
+  { capability: 'TTS', label: 'Giọng Nói Text-to-Speech (TTS)' },
+];
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { activeModelId, setActiveModel, customModels } = useChatStore();
+  const { setActiveModel } = useChatStore();
+  const { builtIn, customModels, activeModel } = useModels();
   const [showModelModal, setShowModelModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-
-  const allModels = [...DEFAULT_MODELS, ...customModels];
-  const activeModel = allModels.find((m) => m.id === activeModelId) || DEFAULT_MODELS[0];
 
   const capabilityBadgeColor: Record<string, string> = {
     CHAT: 'bg-accent-sage/15 text-accent-sage border-accent-sage/30',
@@ -47,38 +53,23 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="relative flex items-center">
             <select
-              value={activeModelId}
+              value={activeModel.id}
               onChange={(e) => setActiveModel(e.target.value)}
               className="appearance-none bg-background border border-border hover:border-muted rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm font-medium text-primary focus:outline-none focus:border-accent-terracotta transition-colors cursor-pointer max-w-[210px] sm:max-w-[300px] truncate"
             >
-              <optgroup label="Chat & Suy Luận (Gemini)">
-                {DEFAULT_MODELS.filter((m) => m.capability === 'CHAT').map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name} — {model.id}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Tạo Hình Ảnh (Imagen / Gemini Image)">
-                {DEFAULT_MODELS.filter((m) => m.capability === 'IMAGE').map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name} — {model.id}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Tạo Video Bất Đồng Bộ (Veo LRO)">
-                {DEFAULT_MODELS.filter((m) => m.capability === 'VIDEO').map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name} — {model.id}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Giọng Nói Text-to-Speech (TTS)">
-                {DEFAULT_MODELS.filter((m) => m.capability === 'TTS').map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name} — {model.id}
-                  </option>
-                ))}
-              </optgroup>
+              {MODEL_GROUPS.map(({ capability, label }) => {
+                const models = builtIn.filter((m) => m.capability === capability);
+                if (models.length === 0) return null;
+                return (
+                  <optgroup key={capability} label={label}>
+                    {models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name} — {model.id}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
               {customModels.length > 0 && (
                 <optgroup label="Model Tùy Chỉnh Đã Thêm (Custom ID)">
                   {customModels.map((model) => (
