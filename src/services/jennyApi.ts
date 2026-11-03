@@ -246,6 +246,7 @@ export const generateText = async (
         ? `${AI_STUDIO_BASE_URL}/models/${model}:streamGenerateContent?alt=sse`
         : `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:streamGenerateContent?alt=sse&key=${customKey}`;
       // No retries here: on failure the code below falls back to a normal request, which has them.
+      // Google holds the response headers until the first token, so a thinking model needs the full wait.
       const response = await fetchWithRetry(
         streamUrl,
         {
@@ -256,7 +257,7 @@ export const generateText = async (
           },
           body: JSON.stringify(payload),
         },
-        { timeoutMs: 20000, retryDelaysMs: [] }
+        { retryDelaysMs: [] }
       );
 
       if (response.ok && response.body) {

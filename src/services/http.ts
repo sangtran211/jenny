@@ -6,10 +6,9 @@ export interface RetryOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
-const RETRYABLE_STATUS = new Set([429, 503]);
 const MAX_RETRY_AFTER_MS = 15000;
 
-// fetch with a response timeout and retries for 429/503. A slow 503 is not retried: Google
+// fetch with a response timeout and retries for 503 (and 429 with Retry-After). A slow 503 is not retried: Google
 // sometimes takes ~40s to say "unavailable", and retrying that would triple the wait.
 export async function fetchWithRetry(
   url: string,
@@ -38,13 +37,14 @@ export async function fetchWithRetry(
       clearTimeout(timer);
     }
 
+    const retryAfterSec = Number(res.headers.get('retry-after'));
+    // 429 usually means the quota is used up, so retrying only delays the error; honour it only
+    // when the server says when to come back.
+    const retryable = res.status === 503 || (res.status === 429 && retryAfterSec > 0);
     const canRetry =
-      RETRYABLE_STATUS.has(res.status) &&
-      attempt < retryDelaysMs.length &&
-      Date.now() - startedAt < fastFailMs;
+      retryable && attempt < retryDelaysMs.length && Date.now() - startedAt < fastFailMs;
     if (!canRetry) return res;
 
-    const retryAfterSec = Number(res.headers.get('retry-after'));
     await sleep(
       retryAfterSec > 0 ? Math.min(retryAfterSec * 1000, MAX_RETRY_AFTER_MS) : retryDelaysMs[attempt]
     );
