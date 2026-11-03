@@ -51,7 +51,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       app: 'Jenny Atelier AI',
       conversations,
       customModels,
-      settings: { ...settings, customApiKey: '' },
+      settings: { ...settings, customApiKey: '', aiStudioApiKey: '' },
       exportDate: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

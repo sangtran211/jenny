@@ -45,6 +45,8 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       customModels: [],
       settings: {
+        provider: 'aistudio',
+        aiStudioApiKey: '',
         customApiKey: '',
         projectId: 'no-coop-300usd-project',
         systemPrompt:
@@ -53,7 +55,7 @@ export const useChatStore = create<ChatState>()(
         enableStreaming: true,
         imageAspectRatio: '1:1',
       },
-      activeModelId: 'gemini-3-flash-preview',
+      activeModelId: 'gemini-2.5-flash',
       isHydrated: false,
       lastSavedAt: Date.now(),
 
@@ -205,7 +207,7 @@ export const useChatStore = create<ChatState>()(
       removeCustomModel: (id) =>
         set((state) => ({
           customModels: state.customModels.filter((m) => m.id !== id),
-          activeModelId: state.activeModelId === id ? 'gemini-3-flash-preview' : state.activeModelId,
+          activeModelId: state.activeModelId === id ? 'gemini-2.5-flash' : state.activeModelId,
           lastSavedAt: Date.now(),
         })),
 
