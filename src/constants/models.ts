@@ -2,6 +2,20 @@ import { AIModel } from '../types/chat';
 
 export const DEFAULT_MODELS: AIModel[] = [
   {
+    id: 'gemini-flash-latest',
+    name: 'Gemini Flash (Latest)',
+    capability: 'CHAT',
+    badge: 'AI Studio • Alias',
+    description: 'Luôn trỏ tới bản Flash mới nhất của Google AI Studio (có lúc quá tải, trả 503).'
+  },
+  {
+    id: 'gemini-pro-latest',
+    name: 'Gemini Pro (Latest)',
+    capability: 'CHAT',
+    badge: 'Reasoning • AI Studio',
+    description: 'Luôn trỏ tới bản Pro mới nhất, dùng cho suy luận và lập trình phức tạp.'
+  },
+  {
     id: 'gemini-3-flash-preview',
     name: 'Gemini 3 Flash Preview',
     capability: 'CHAT',
@@ -26,8 +40,8 @@ export const DEFAULT_MODELS: AIModel[] = [
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     capability: 'CHAT',
-    badge: 'Balanced',
-    description: 'Cân bằng hoàn hảo giữa tốc độ phản hồi và chất lượng suy luận.'
+    badge: 'Default • Balanced',
+    description: 'Cân bằng hoàn hảo giữa tốc độ phản hồi và chất lượng suy luận. Model mặc định.'
   },
   {
     id: 'gemini-2.5-flash-lite',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
 import { useChatStore } from '../hooks/useChatStore';
 import { TTS_VOICES } from '../constants/models';
+import type { ApiProvider } from '../types/chat';
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useChatStore();
@@ -36,6 +37,31 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
+              <label className="block text-xs uppercase tracking-wider text-muted mb-1">Nhà cung cấp API</label>
+              <select
+                value={form.provider ?? 'aistudio'}
+                onChange={(e) => setForm({ ...form, provider: e.target.value as ApiProvider })}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta"
+              >
+                <option value="aistudio">Google AI Studio (API key)</option>
+                <option value="vertex">Vertex AI</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-muted mb-1">AI Studio API Key</label>
+              <input
+                type="password"
+                value={form.aiStudioApiKey ?? ''}
+                onChange={(e) => setForm({ ...form, aiStudioApiKey: e.target.value })}
+                placeholder="Để trống để dùng VITE_GEMINI_API_KEY"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
               <label className="block text-xs uppercase tracking-wider text-muted mb-1">Project ID (Veo LRO)</label>
               <input
                 value={form.projectId}
@@ -46,7 +72,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-muted mb-1">Custom API Key (Ghi đè)</label>
+              <label className="block text-xs uppercase tracking-wider text-muted mb-1">Vertex API Key (Ghi đè)</label>
               <input
                 type="password"
                 value={form.customApiKey}

@@ -6,6 +6,36 @@ interface ApiContext {
 
 const DEFAULT_FALLBACK_KEY = 'YOUR_DEFAULT_FALLBACK_KEY_HERE'; // Replace with your actual default fallback key if needed
 
+const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+
+const isAiStudio = (settings: AppSettings) => (settings.provider ?? 'aistudio') === 'aistudio';
+
+const getAiStudioKey = (settings: AppSettings) =>
+  settings.aiStudioApiKey?.trim() || import.meta.env.VITE_GEMINI_API_KEY || '';
+
+const getModelPath = (model: string, settings: AppSettings) =>
+  isAiStudio(settings) ? `models/${model}` : `publishers/google/models/${model}`;
+
+const requireAiStudioKey = (settings: AppSettings) => {
+  const key = getAiStudioKey(settings);
+  if (!key) {
+    throw new Error('Chưa có AI Studio API Key. Nhập key trong Cấu hình hoặc đặt VITE_GEMINI_API_KEY trong .env.local.');
+  }
+  return key;
+};
+
+const throwApiError = async (res: Response): Promise<never> => {
+  const errText = await res.text();
+  let errMsg = res.statusText;
+  try {
+    const errJson = JSON.parse(errText);
+    errMsg = errJson.error?.message || errMsg;
+  } catch {
+    errMsg = errText || errMsg;
+  }
+  throw new Error(`API Error (${res.status}): ${errMsg}`);
+};
+
 const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) => {
   const customKey =
     settings.customApiKey?.trim() ||
@@ -50,6 +80,19 @@ const executeRequest = async (
   context: ApiContext,
   isUsCentral = false
 ) => {
+  if (isAiStudio(context.settings)) {
+    const res = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': requireAiStudioKey(context.settings),
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) await throwApiError(res);
+    return res.json();
+  }
+
   const { baseUrl, key, useProxy, directFallbackUrl } = getProxyOrDirectBaseUrl(
     context.settings,
     isUsCentral
@@ -88,17 +131,7 @@ const executeRequest = async (
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    let errMsg = res.statusText;
-    try {
-      const errJson = JSON.parse(errText);
-      errMsg = errJson.error?.message || errMsg;
-    } catch {
-      errMsg = errText || errMsg;
-    }
-    throw new Error(`API Error (${res.status}): ${errMsg}`);
-  }
+  if (!res.ok) await throwApiError(res);
   return res.json();
 };
 
@@ -164,17 +197,24 @@ export const generateText = async (
     };
   }
 
-  const customKey =
-    context.settings.customApiKey?.trim() ||
-    import.meta.env.VITE_JENNY_API_KEY ||
-    DEFAULT_FALLBACK_KEY;
+  const useAiStudio = isAiStudio(context.settings);
+  const customKey = useAiStudio
+    ? getAiStudioKey(context.settings)
+    : context.settings.customApiKey?.trim() ||
+      import.meta.env.VITE_JENNY_API_KEY ||
+      DEFAULT_FALLBACK_KEY;
 
   if (context.settings.enableStreaming && onStreamChunk && customKey) {
     try {
-      const streamUrl = `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:streamGenerateContent?alt=sse&key=${customKey}`;
+      const streamUrl = useAiStudio
+        ? `${AI_STUDIO_BASE_URL}/models/${model}:streamGenerateContent?alt=sse`
+        : `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:streamGenerateContent?alt=sse&key=${customKey}`;
       const response = await fetch(streamUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(useAiStudio && { 'x-goog-api-key': customKey }),
+        },
         body: JSON.stringify(payload),
       });
 
@@ -222,7 +262,7 @@ export const generateText = async (
     }
   }
 
-  const endpointPath = `publishers/google/models/${model}:generateContent`;
+  const endpointPath = `${getModelPath(model, context.settings)}:generateContent`;
   const data = await executeRequest(endpointPath, payload, context);
   const fullText =
     data.candidates?.[0]?.content?.parts?.map((p: any) => p.text || '').join('') || '';
@@ -238,7 +278,7 @@ export const generateImage = async (
   context: ApiContext,
   refImageB64?: string | null
 ) => {
-  const endpointPath = `publishers/google/models/${model}:generateContent`;
+  const endpointPath = `${getModelPath(model, context.settings)}:generateContent`;
   const parts: any[] = [{ text: prompt || 'Generate a high quality artistic image' }];
 
   if (refImageB64) {
@@ -270,7 +310,7 @@ export const generateImage = async (
 
 
 export const generateTTS = async (prompt: string, model: string, context: ApiContext) => {
-  const endpointPath = `publishers/google/models/${model}:generateContent`;
+  const endpointPath = `${getModelPath(model, context.settings)}:generateContent`;
   
   const payload = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -291,6 +331,9 @@ export const generateTTS = async (prompt: string, model: string, context: ApiCon
 };
 
 export const initiateVideoGen = async (prompt: string, model: string, context: ApiContext) => {
+  if (isAiStudio(context.settings)) {
+    throw new Error('Tạo video (Veo) chỉ hỗ trợ qua Vertex AI. Đổi Nhà cung cấp sang Vertex AI trong Cấu hình.');
+  }
   const projectNumber = context.settings.projectId || 'no-coop-300usd-project';
   const endpointPath = `projects/${projectNumber}/locations/us-central1/publishers/google/models/${model}:predictLongRunning`;
 

@@ -35,7 +35,11 @@ export interface Conversation {
   pinned?: boolean;
 }
 
+export type ApiProvider = 'aistudio' | 'vertex';
+
 export interface AppSettings {
+  provider?: ApiProvider; // undefined (settings saved before this field existed) is treated as 'aistudio'
+  aiStudioApiKey?: string;
   customApiKey: string;
   projectId: string;
   systemPrompt: string;
