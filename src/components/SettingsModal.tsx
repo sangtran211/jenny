@@ -2,11 +2,17 @@ import React, { useState } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
 import { useChatStore } from '../hooks/useChatStore';
 import { TTS_VOICES } from '../constants/models';
+import { PERSONAS, CUSTOM_PERSONA_ID } from '../constants/personas';
 import type { ApiProvider } from '../types/chat';
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useChatStore();
   const [form, setForm] = useState(settings);
+
+  const handlePersonaChange = (id: string) => {
+    const persona = PERSONAS.find((p) => p.id === id);
+    setForm(persona ? { ...form, personaId: id, systemPrompt: persona.systemPrompt } : { ...form, personaId: CUSTOM_PERSONA_ID });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,11 +132,25 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </label>
 
           <div>
+            <label className="block text-xs uppercase tracking-wider text-muted mb-1">Persona</label>
+            <select
+              value={form.personaId ?? PERSONAS.find((p) => p.systemPrompt === form.systemPrompt)?.id ?? CUSTOM_PERSONA_ID}
+              onChange={(e) => handlePersonaChange(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta"
+            >
+              {PERSONAS.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+              <option value={CUSTOM_PERSONA_ID}>Tùy chỉnh</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block text-xs uppercase tracking-wider text-muted mb-1">System Instruction (Nhân cách Jenny)</label>
             <textarea
               value={form.systemPrompt}
-              onChange={(e) => setForm({ ...form, systemPrompt: e.target.value })}
-              rows={3}
+              onChange={(e) => setForm({ ...form, systemPrompt: e.target.value, personaId: CUSTOM_PERSONA_ID })}
+              rows={8}
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta resize-none"
             />
           </div>
