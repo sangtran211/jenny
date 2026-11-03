@@ -9,6 +9,7 @@ import {
   pollVideoGen,
 } from '../services/jennyApi';
 import { useModels } from '../hooks/useModels';
+import { API_ERROR_PREFIX } from '../constants/messages';
 import { Attachment, ModelCapability } from '../types/chat';
 
 export function Composer() {
@@ -141,7 +142,7 @@ export function Composer() {
       }
     } catch (err: any) {
       updateMessage(convId, placeholderId, {
-        text: `⚠️ Lỗi gọi API (${activeModel.id}): ${err.message}`,
+        text: `${API_ERROR_PREFIX} (${activeModel.id}): ${err.message}`,
         isStreaming: false,
       });
     } finally {

@@ -1,5 +1,6 @@
 import { AppSettings, Message } from '../types/chat';
 import type { RawAiStudioModel } from './modelCatalog';
+import { fetchWithRetry } from './http';
 
 interface ApiContext {
   settings: AppSettings;
@@ -104,7 +105,7 @@ const executeRequest = async (
     // A key in the browser (typed in Settings or VITE_GEMINI_API_KEY) goes direct to Google.
     // With no client key on a deployed site, the server-side proxy supplies GEMINI_API_KEY instead.
     if (!getAiStudioKey(context.settings) && !isLocalhost()) {
-      const res = await fetch('/api/jenny', {
+      const res = await fetchWithRetry('/api/jenny', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: 'aistudio', endpointPath, payload }),
@@ -116,7 +117,7 @@ const executeRequest = async (
       return res.json();
     }
 
-    const res = await fetch(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
+    const res = await fetchWithRetry(`${AI_STUDIO_BASE_URL}/${endpointPath}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -244,14 +245,19 @@ export const generateText = async (
       const streamUrl = useAiStudio
         ? `${AI_STUDIO_BASE_URL}/models/${model}:streamGenerateContent?alt=sse`
         : `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:streamGenerateContent?alt=sse&key=${customKey}`;
-      const response = await fetch(streamUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(useAiStudio && { 'x-goog-api-key': customKey }),
+      // No retries here: on failure the code below falls back to a normal request, which has them.
+      const response = await fetchWithRetry(
+        streamUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(useAiStudio && { 'x-goog-api-key': customKey }),
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+        { timeoutMs: 20000, retryDelaysMs: [] }
+      );
 
       if (response.ok && response.body) {
         const reader = response.body.getReader();

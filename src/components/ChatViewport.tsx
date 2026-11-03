@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../hooks/useChatStore';
-import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2 } from 'lucide-react';
+import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2, RotateCcw } from 'lucide-react';
+import { API_ERROR_PREFIX } from '../constants/messages';
 import { cn } from '../lib/utils';
 import { generateTTS } from '../services/jennyApi';
 import { STARTER_PROMPTS } from '../constants/models';
@@ -176,6 +177,15 @@ export function ChatViewport() {
                     {ttsLoadingId === msg.id ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
                     <span>Đọc giọng Jenny</span>
                   </button>
+                  {msg.text.startsWith(API_ERROR_PREFIX) && messages[i - 1]?.role === 'user' && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('jenny-fill-prompt', { detail: messages[i - 1].text }))}
+                      className="flex items-center gap-1 hover:text-accent-terracotta"
+                    >
+                      <RotateCcw size={12} />
+                      <span>Thử lại</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
