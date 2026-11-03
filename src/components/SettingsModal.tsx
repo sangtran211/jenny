@@ -9,6 +9,11 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useChatStore();
   const [form, setForm] = useState(settings);
 
+  // Settings saved before personas existed, or with a persona that is no longer built in, show as match-by-text / custom.
+  const personaValue = PERSONAS.some((p) => p.id === form.personaId)
+    ? form.personaId!
+    : PERSONAS.find((p) => p.systemPrompt === form.systemPrompt)?.id ?? CUSTOM_PERSONA_ID;
+
   const handlePersonaChange = (id: string) => {
     const persona = PERSONAS.find((p) => p.id === id);
     setForm(persona ? { ...form, personaId: id, systemPrompt: persona.systemPrompt } : { ...form, personaId: CUSTOM_PERSONA_ID });
@@ -134,7 +139,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted mb-1">Persona</label>
             <select
-              value={form.personaId ?? PERSONAS.find((p) => p.systemPrompt === form.systemPrompt)?.id ?? CUSTOM_PERSONA_ID}
+              value={personaValue}
               onChange={(e) => handlePersonaChange(e.target.value)}
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta"
             >

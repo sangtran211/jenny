@@ -8,3 +8,6 @@ key.md
 .vercel
 *.log
 .claude
+
+# local-only notes and private prompts
+private/
