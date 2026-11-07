@@ -301,15 +301,16 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'jenny-chat-storage',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       migrate: (persistedState: any, version: number) => {
         if (!persistedState || typeof persistedState !== 'object') return persistedState;
+        let next = persistedState;
         if (version < 1) {
-          return {
-            ...persistedState,
+          next = {
+            ...next,
             settings: {
-              ...(persistedState.settings || {}),
+              ...(next.settings || {}),
               provider: DEFAULT_PROVIDER,
             },
             activeModelId: DEFAULT_MODEL_BY_PROVIDER[DEFAULT_PROVIDER],
@@ -317,7 +318,24 @@ export const useChatStore = create<ChatState>()(
             remoteModelsAt: null,
           };
         }
-        return persistedState;
+        if (version < 2) {
+          const prevPrompt: string = next.settings?.systemPrompt || '';
+          const isOldDevDefault =
+            prevPrompt.includes('GIS/MapLibre') || next.settings?.personaId === 'dev';
+          next = {
+            ...next,
+            settings: {
+              ...(next.settings || {}),
+              ...(isOldDevDefault
+                ? {
+                    personaId: PERSONAS[0].id,
+                    systemPrompt: PERSONAS[0].systemPrompt,
+                  }
+                : {}),
+            },
+          };
+        }
+        return next;
       },
       onRehydrateStorage: () => (state) => {
         if (state) {

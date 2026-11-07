@@ -21,44 +21,44 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   return (
     <>
-      <header className="h-16 border-b border-border flex items-center justify-between px-3 sm:px-6 bg-surface/90 backdrop-blur-md z-20 shrink-0">
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      <header className="h-16 border-b border-border flex items-center justify-between gap-2 px-2.5 sm:px-6 bg-surface/90 backdrop-blur-md z-20 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={onToggleSidebar}
-            className="p-2.5 rounded-lg hover:bg-border/60 text-muted hover:text-primary transition-colors"
+            className="p-2 sm:p-2.5 rounded-lg hover:bg-border/60 text-muted hover:text-primary transition-colors"
             title="Đóng/Mở thanh lịch sử"
           >
             <PanelLeft size={18} />
           </button>
 
           <div className="flex items-baseline gap-2">
-            <span className="font-serif text-xl sm:text-2xl tracking-tight text-primary">Jenny</span>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-accent-terracotta hidden md:inline-block">
+            <span className="font-serif text-lg sm:text-2xl tracking-tight text-primary">Jenny</span>
+            <span className="text-[11px] font-mono uppercase tracking-widest text-accent-terracotta hidden xl:inline-block">
               Atelier AI
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Nút chọn Model nổi bật, dễ nhận diện đặc điểm & nhà cung cấp */}
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+          {/* Nút chọn Model nổi bật, tự động co giãn vừa khít trên cả màn hình nhỏ 320px–390px */}
           <button
             type="button"
             onClick={() => setShowPicker(true)}
-            className="group flex items-center gap-2.5 bg-background hover:bg-background/80 border border-accent-terracotta/45 hover:border-accent-terracotta rounded-xl px-2.5 sm:px-3.5 py-1.5 text-left transition-all shadow-sm"
+            className="group flex items-center gap-1.5 sm:gap-2.5 bg-background hover:bg-background/80 border border-accent-terracotta/45 hover:border-accent-terracotta rounded-xl px-2 sm:px-3.5 py-1.5 text-left transition-all shadow-sm min-w-0 max-w-full"
             title="Bấm để xem chú thích đặc điểm & đổi Model AI"
           >
-            <div className={`p-1.5 rounded-lg shrink-0 ${activeStyle.iconBgClass}`}>
+            <div className={`p-1.5 rounded-lg shrink-0 hidden sm:flex ${activeStyle.iconBgClass}`}>
               <ActiveIcon size={16} />
             </div>
 
-            <div className="min-w-0 max-w-[150px] sm:max-w-[290px]">
-              <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1 max-w-[260px]">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-xs sm:text-sm font-semibold text-primary truncate">
                   {activeModel.name}
                 </span>
                 {activeModel.badge && (
                   <span
-                    className={`hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${activeStyle.badgeClass}`}
+                    className={`hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${activeStyle.badgeClass}`}
                   >
                     {activeModel.badge}
                   </span>
@@ -83,7 +83,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
           <button
             onClick={() => setShowModelModal(true)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-accent-terracotta/15 border border-accent-terracotta/40 text-accent-terracotta hover:bg-accent-terracotta hover:text-white transition-colors text-xs font-medium shrink-0"
+            className="flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-accent-terracotta/15 border border-accent-terracotta/40 text-accent-terracotta hover:bg-accent-terracotta hover:text-white transition-colors text-xs font-medium shrink-0"
             title="Thêm Model mới bằng ID"
           >
             <Plus size={15} />
@@ -92,7 +92,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
           <button
             onClick={() => setShowSettingsModal(true)}
-            className="p-2.5 rounded-xl border border-border bg-background hover:border-muted text-muted hover:text-primary transition-colors shrink-0"
+            className="p-2 sm:p-2.5 rounded-xl border border-border bg-background hover:border-muted text-muted hover:text-primary transition-colors shrink-0"
             title="Cấu hình API & Giọng nói"
           >
             <Settings size={17} />

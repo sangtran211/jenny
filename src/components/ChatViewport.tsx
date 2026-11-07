@@ -95,7 +95,7 @@ export function ChatViewport() {
                 Xin chào, tôi là Jenny.
               </h1>
               <p className="text-sm text-muted leading-relaxed">
-                Không gian làm việc AI đa phương thức tích hợp Gemini, Imagen, Veo LRO và giọng nói TTS. Lịch sử chat được tự động lưu theo máy và hỗ trợ Export/Import linh hoạt.
+                Trợ lý AI đa năng đồng hành cùng bạn trong công việc, học tập và sáng tạo: trò chuyện thông minh, soạn thảo văn bản, tạo hình ảnh, dựng video và chuyển văn bản thành giọng nói tự nhiên.
               </p>
 
               {(activeModel.bestFor || activeModel.description) && (
@@ -151,7 +151,7 @@ export function ChatViewport() {
         {messages.map((msg, i) => (
           <div
             key={msg.id || i}
-            className={cn('flex gap-3.5', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
+            className={cn('flex gap-2.5 sm:gap-3.5 min-w-0', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
           >
             <div
               className={cn(
@@ -162,18 +162,18 @@ export function ChatViewport() {
               {msg.role === 'user' ? 'B' : 'J'}
             </div>
 
-            <div className={cn('flex flex-col gap-2 max-w-[85%]', msg.role === 'user' ? 'items-end' : 'items-start')}>
+            <div className={cn('flex flex-col gap-2 min-w-0 max-w-[85%]', msg.role === 'user' ? 'items-end' : 'items-start')}>
               {msg.text && (
                 <div
                   className={cn(
-                    'px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                    'px-3.5 sm:px-4 py-3 rounded-2xl text-sm leading-relaxed max-w-full overflow-hidden break-words [overflow-wrap:anywhere]',
                     msg.role === 'user' ? 'bg-surface border border-border' : 'bg-surface/40 border border-border/60'
                   )}
                 >
                   {msg.role === 'user' ? (
-                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                    <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.text}</div>
                   ) : (
-                    <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-background prose-pre:border prose-pre:border-border max-w-none">
+                    <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-background prose-pre:border prose-pre:border-border max-w-none min-w-0 break-words [overflow-wrap:anywhere]">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                     </div>
                   )}
@@ -181,26 +181,26 @@ export function ChatViewport() {
               )}
 
               {msg.attachments?.map((att, j) => (
-                <div key={j} className="rounded-xl overflow-hidden border border-border bg-surface">
+                <div key={j} className="rounded-xl overflow-hidden border border-border bg-surface max-w-full">
                   {att.type === 'image' && (
-                    <img src={att.url} alt="Attachment" className="max-w-xs sm:max-w-md max-h-96 object-contain" />
+                    <img src={att.url} alt="Attachment" className="w-full max-w-xs sm:max-w-md max-h-96 object-contain" />
                   )}
                   {att.type === 'video' && (
-                    <video src={att.url} controls className="max-w-xs sm:max-w-md max-h-96" />
+                    <video src={att.url} controls className="w-full max-w-xs sm:max-w-md max-h-96" />
                   )}
                   {att.type === 'audio' && (
-                    <div className="p-3 flex items-center gap-3 min-w-[250px]">
-                      <button onClick={() => { const a = new Audio(att.url); a.play(); }} className="text-accent-sage hover:opacity-80">
-                        <PlayCircle size={30} />
+                    <div className="p-2.5 sm:p-3 flex items-center gap-2.5 max-w-full">
+                      <button onClick={() => { const a = new Audio(att.url); a.play(); }} className="text-accent-sage hover:opacity-80 shrink-0">
+                        <PlayCircle size={28} />
                       </button>
-                      <audio src={att.url} controls className="h-8 w-48" />
+                      <audio src={att.url} controls className="h-8 w-44 sm:w-56 max-w-[calc(100vw-8.5rem)]" />
                     </div>
                   )}
                 </div>
               ))}
 
               {msg.role === 'model' && msg.text && !msg.isStreaming && (
-                <div className="flex items-center gap-3 px-1 text-xs text-muted">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-xs text-muted">
                   <button onClick={() => handleCopy(msg.id, msg.text)} className="flex items-center gap-1 hover:text-primary">
                     {copiedId === msg.id ? <Check size={12} /> : <Copy size={12} />}
                     <span>{copiedId === msg.id ? 'Đã chép' : 'Sao chép'}</span>
