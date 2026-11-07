@@ -1,4 +1,4 @@
-import { AppSettings, Message } from '../types/chat';
+import { AppSettings, Attachment, Message } from '../types/chat';
 import type { RawAiStudioModel } from './modelCatalog';
 import { fetchWithRetry } from './http';
 import { buildApiError } from './apiErrors';
@@ -90,7 +90,7 @@ export const listAiStudioModels = async (settings: AppSettings): Promise<RawAiSt
 };
 
 const parseDataUri = (dataUri: string) => {
-  const matches = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+  const matches = dataUri.match(/^data:([^;,]+)(?:;[^,]*)?;base64,(.+)$/);
   if (matches) {
     return { mimeType: matches[1], data: matches[2] };
   }
@@ -175,7 +175,27 @@ const executeRequest = async (
 };
 
 
-const buildChatContents = (prompt: string, history: Message[], imageDataUri?: string | null) => {
+const appendAttachmentParts = (parts: any[], attachments?: Attachment[]) => {
+  attachments?.forEach((att) => {
+    if (att.textContent !== undefined) {
+      parts.push({
+        text: `\n--- Nội dung tệp đính kèm: ${att.name || 'file'} ---\n${att.textContent}\n--- Kết thúc tệp ---\n`,
+      });
+    } else if (
+      att.url &&
+      (att.type === 'image' || att.type === 'file' || att.type === 'audio' || att.type === 'video')
+    ) {
+      const { mimeType, data } = parseDataUri(att.url);
+      parts.push({ inlineData: { mimeType: att.mimeType || mimeType, data } });
+    }
+  });
+};
+
+const buildChatContents = (
+  prompt: string,
+  history: Message[],
+  currentAttachments?: Attachment[] | string | null
+) => {
   const contents = history
     .filter((msg) => msg.text?.trim() || (msg.attachments && msg.attachments.length > 0))
     .map((msg) => {
@@ -183,12 +203,7 @@ const buildChatContents = (prompt: string, history: Message[], imageDataUri?: st
       if (msg.text?.trim()) {
         parts.push({ text: msg.text });
       }
-      msg.attachments?.forEach((att) => {
-        if (att.type === 'image' && att.url) {
-          const { mimeType, data } = parseDataUri(att.url);
-          parts.push({ inlineData: { mimeType, data } });
-        }
-      });
+      appendAttachmentParts(parts, msg.attachments);
       return {
         role: msg.role === 'user' ? 'user' : 'model',
         parts: parts.length > 0 ? parts : [{ text: '...' }],
@@ -199,9 +214,14 @@ const buildChatContents = (prompt: string, history: Message[], imageDataUri?: st
   if (prompt.trim()) {
     userParts.push({ text: prompt });
   }
-  if (imageDataUri) {
-    const { mimeType, data } = parseDataUri(imageDataUri);
+  if (typeof currentAttachments === 'string' && currentAttachments) {
+    const { mimeType, data } = parseDataUri(currentAttachments);
     userParts.push({ inlineData: { mimeType, data } });
+  } else if (Array.isArray(currentAttachments) && currentAttachments.length > 0) {
+    if (!prompt.trim()) {
+      userParts.push({ text: 'Hãy phân tích nội dung đính kèm này.' });
+    }
+    appendAttachmentParts(userParts, currentAttachments);
   }
 
   contents.push({
@@ -217,10 +237,10 @@ export const generateText = async (
   model: string,
   context: ApiContext,
   history: Message[] = [],
-  imageDataUri?: string | null,
+  attachments?: Attachment[] | string | null,
   onStreamChunk?: (fullTextSoFar: string) => void
 ) => {
-  const contents = buildChatContents(prompt, history, imageDataUri);
+  const contents = buildChatContents(prompt, history, attachments);
 
   const payload: any = {
     contents,
