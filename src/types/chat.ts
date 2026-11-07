@@ -26,6 +26,7 @@ export interface Message {
   modelId?: string;
   attachments?: Attachment[];
   isStreaming?: boolean;
+  retryable?: boolean; // false on an error message where asking again cannot help
 }
 
 export interface Conversation {

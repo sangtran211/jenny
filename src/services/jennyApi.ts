@@ -1,6 +1,7 @@
 import { AppSettings, Message } from '../types/chat';
 import type { RawAiStudioModel } from './modelCatalog';
 import { fetchWithRetry } from './http';
+import { buildApiError } from './apiErrors';
 
 interface ApiContext {
   settings: AppSettings;
@@ -39,7 +40,7 @@ const throwApiError = async (res: Response): Promise<never> => {
   } catch {
     errMsg = errText || errMsg;
   }
-  throw new Error(`API Error (${res.status}): ${errMsg}`);
+  throw buildApiError(res.status, `API Error (${res.status}): ${errMsg}`);
 };
 
 const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) => {
@@ -112,7 +113,7 @@ const executeRequest = async (
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `API Error (Status ${res.status})`);
+        throw buildApiError(res.status, err.error || `API Error (Status ${res.status})`);
       }
       return res.json();
     }
@@ -151,10 +152,11 @@ const executeRequest = async (
       }
       if (res.status !== 404) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `API Error (Status ${res.status})`);
+        throw buildApiError(res.status, err.error || `API Error (Status ${res.status})`);
       }
     } catch (proxyErr: any) {
-      if (!key || !directFallbackUrl) throw proxyErr;
+      // With only the placeholder key there is nothing useful to retry directly.
+      if (!key || key === DEFAULT_FALLBACK_KEY || !directFallbackUrl) throw proxyErr;
     }
   }
 
