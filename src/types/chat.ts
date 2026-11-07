@@ -20,9 +20,12 @@ export interface AIModel {
 export type MessageRole = 'user' | 'model';
 
 export interface Attachment {
-  type: 'image' | 'video' | 'audio';
+  type: 'image' | 'video' | 'audio' | 'file';
   url: string; // Base64 data URI or external URL
   mimeType: string;
+  name?: string;
+  size?: number;
+  textContent?: string;
 }
 
 export interface Message {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../hooks/useChatStore';
-import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2, RotateCcw } from 'lucide-react';
+import { PlayCircle, Volume2, Copy, Check, Sparkles, Loader2, RotateCcw, FileText } from 'lucide-react';
 import { API_ERROR_PREFIX } from '../constants/messages';
 import { cn } from '../lib/utils';
 import { generateTTS } from '../services/jennyApi';
@@ -15,6 +15,7 @@ export function ChatViewport() {
     activeConversationId,
     settings,
     setActiveModel,
+    createConversation,
   } = useChatStore();
   const { allModels, activeModel } = useModels();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -69,9 +70,16 @@ export function ChatViewport() {
 
   if (!activeConversation) {
     return (
-      <div className="flex-1 flex items-center justify-center text-muted flex-col gap-2">
+      <div className="flex-1 flex items-center justify-center text-muted flex-col gap-3 p-4">
         <h2 className="text-2xl font-serif text-primary">Jenny Atelier</h2>
-        <p className="text-sm">Tạo cuộc trò chuyện mới để bắt đầu.</p>
+        <p className="text-sm text-center">Tạo cuộc trò chuyện mới để bắt đầu.</p>
+        <button
+          type="button"
+          onClick={() => createConversation()}
+          className="mt-1 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-terracotta text-white text-xs font-medium hover:opacity-90 transition-opacity shadow-sm"
+        >
+          <span>+ Đoạn chat mới</span>
+        </button>
       </div>
     );
   }
@@ -194,6 +202,18 @@ export function ChatViewport() {
                         <PlayCircle size={28} />
                       </button>
                       <audio src={att.url} controls className="h-8 w-44 sm:w-56 max-w-[calc(100vw-8.5rem)]" />
+                    </div>
+                  )}
+                  {att.type === 'file' && (
+                    <div className="px-3 py-2 flex items-center gap-2.5 max-w-xs sm:max-w-sm text-xs">
+                      <FileText size={18} className="text-accent-terracotta shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-primary truncate">{att.name || 'Tệp đính kèm'}</div>
+                        <div className="text-[10px] text-muted truncate">
+                          {att.mimeType || 'Tài liệu'}
+                          {att.size ? ` • ${(att.size / 1024).toFixed(1)} KB` : ''}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

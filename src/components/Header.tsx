@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Settings, Plus, PanelLeft, ChevronDown } from 'lucide-react';
+import { Settings, Plus, PanelLeft, ChevronDown, MessageSquarePlus } from 'lucide-react';
 import { useModels } from '../hooks/useModels';
+import { useChatStore } from '../hooks/useChatStore';
 import { ModelModal } from './ModelModal';
 import { SettingsModal } from './SettingsModal';
 import { ModelPickerModal, getEffectiveTier, TIER_STYLE } from './ModelPickerModal';
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { provider, activeModel } = useModels();
+  const createConversation = useChatStore((state) => state.createConversation);
   const [showPicker, setShowPicker] = useState(false);
   const [showModelModal, setShowModelModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -21,8 +23,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   return (
     <>
-      <header className="h-16 border-b border-border flex items-center justify-between gap-2 px-2.5 sm:px-6 bg-surface/90 backdrop-blur-md z-20 shrink-0">
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <header className="h-16 border-b border-border flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-6 bg-surface/90 backdrop-blur-md z-20 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <button
             onClick={onToggleSidebar}
             className="p-2 sm:p-2.5 rounded-lg hover:bg-border/60 text-muted hover:text-primary transition-colors"
@@ -37,6 +39,17 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               Atelier AI
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => createConversation()}
+            className="ml-1 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-accent-terracotta text-white hover:opacity-90 transition-opacity text-xs font-medium shrink-0 shadow-sm"
+            title="Tạo đoạn chat mới"
+          >
+            <MessageSquarePlus size={15} />
+            <span className="hidden sm:inline">Đoạn chat mới</span>
+            <span className="sm:hidden">Mới</span>
+          </button>
         </div>
 
         <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 min-w-0 flex-1">
