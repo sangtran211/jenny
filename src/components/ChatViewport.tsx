@@ -177,7 +177,7 @@ export function ChatViewport() {
                     {ttsLoadingId === msg.id ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
                     <span>Đọc giọng Jenny</span>
                   </button>
-                  {msg.text.startsWith(API_ERROR_PREFIX) && messages[i - 1]?.role === 'user' && (
+                  {msg.text.startsWith(API_ERROR_PREFIX) && msg.retryable !== false && messages[i - 1]?.role === 'user' && (
                     <button
                       onClick={() => window.dispatchEvent(new CustomEvent('jenny-fill-prompt', { detail: messages[i - 1].text }))}
                       className="flex items-center gap-1 hover:text-accent-terracotta"

@@ -144,6 +144,7 @@ export function Composer() {
       updateMessage(convId, placeholderId, {
         text: `${API_ERROR_PREFIX} (${activeModel.id}): ${err.message}`,
         isStreaming: false,
+        retryable: err?.retryable !== false,
       });
     } finally {
       setIsLoading(false);
