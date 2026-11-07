@@ -56,8 +56,8 @@ export const DEFAULT_MODELS: AIModel[] = [
     id: 'gemini-4-argon',
     name: 'Gemini 4 Argon',
     capability: 'CHAT',
-    badge: 'New • Chậm/giới hạn',
-    description: 'Có trong Model Garden và chạy được trong console, nhưng gọi bằng API key hiện bị treo hoặc 429.',
+    badge: 'New • Có thể chậm',
+    description: 'Model mới nhất (GA 13/10/2026). Gọi bằng API key chạy được nhưng có lúc chờ ~30 giây hoặc báo 429.',
     providers: ['vertex']
   },
   {
