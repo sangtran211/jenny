@@ -55,7 +55,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             <select
               value={activeModel.id}
               onChange={(e) => setActiveModel(e.target.value)}
-              className="appearance-none bg-background border border-border hover:border-muted rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm font-medium text-primary focus:outline-none focus:border-accent-terracotta transition-colors cursor-pointer max-w-[210px] sm:max-w-[300px] truncate"
+              className="appearance-none bg-background border border-border hover:border-muted rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm font-medium text-primary focus:outline-none focus:border-accent-terracotta transition-colors cursor-pointer max-w-[140px] sm:max-w-[300px] truncate"
             >
               {MODEL_GROUPS.map(({ capability, label }) => {
                 const models = builtIn.filter((m) => m.capability === capability);

@@ -1,6 +1,130 @@
-import { AIModel } from '../types/chat';
+import { AIModel, ApiProvider } from '../types/chat';
 
+// Model used when the stored selection is not offered by the current provider.
+export const DEFAULT_MODEL_BY_PROVIDER: Record<ApiProvider, string> = {
+  aistudio: 'gemini-2.5-flash',
+  vertex: 'gemini-3.8-flash',
+};
+
+// Built-in list. `providers` limits where a model shows (undefined = both). On AI Studio this is
+// only the offline fallback (the live list comes from the API); on Vertex it is the whole list,
+// since Vertex cannot list models for an API key. Ids marked "verified" answered a real request
+// with the project's key; Garden "Serverless" alone did not guarantee access (2.5-family gave 404).
 export const DEFAULT_MODELS: AIModel[] = [
+  // ---- Vertex AI ----
+  {
+    id: 'gemini-3.8-flash',
+    name: 'Gemini 3.8 Flash',
+    capability: 'CHAT',
+    badge: 'Default • Fast',
+    description: 'Flash mới nhất đã kiểm chứng trên Vertex, tốc độ cao cho hội thoại & coding.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-3.7-flash',
+    name: 'Gemini 3.7 Flash',
+    capability: 'CHAT',
+    badge: 'Fast',
+    description: 'Bản Flash 3.7, cân bằng tốc độ và chất lượng.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-3.5-flash',
+    name: 'Gemini 3.5 Flash',
+    capability: 'CHAT',
+    badge: 'Fast',
+    description: 'Bản Flash 3.5 ổn định.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite',
+    capability: 'CHAT',
+    badge: 'Ultra Fast',
+    description: 'Siêu nhẹ, phản hồi tức thì cho tóm tắt và dịch thuật.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-3.1-flash-lite',
+    name: 'Gemini 3.1 Flash Lite',
+    capability: 'CHAT',
+    badge: 'Lite',
+    description: 'Bản Lite tiết kiệm chi phí.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-4-argon',
+    name: 'Gemini 4 Argon',
+    capability: 'CHAT',
+    badge: 'New • Có thể chậm',
+    description: 'Model mới nhất (GA 13/10/2026). Gọi bằng API key chạy được nhưng có lúc chờ ~30 giây hoặc báo 429.',
+    providers: ['vertex']
+  },
+  {
+    id: 'veo-3.1-lite-generate-001',
+    name: 'Veo 3.1 Lite Video (LRO)',
+    capability: 'VIDEO',
+    badge: 'Video LRO',
+    description: 'Tạo video 16:9 bất đồng bộ (Long-Running Operation) qua Vertex AI. Chưa kiểm chứng.',
+    providers: ['vertex']
+  },
+  {
+    id: 'gemini-3.8-flash-tts',
+    name: 'Gemini 3.8 Flash TTS',
+    capability: 'TTS',
+    badge: 'Voice Synthesis',
+    description: 'Chuyển văn bản thành giọng nói với các giọng Puck, Aoede, Kore...',
+    providers: ['vertex']
+  },
+
+  // ---- Both providers ----
+  {
+    id: 'gemini-3-flash-preview',
+    name: 'Gemini 3 Flash Preview',
+    capability: 'CHAT',
+    badge: 'Preview • Fast',
+    description: 'Model tốc độ cao, tối ưu cho hội thoại đa phương thức & coding.'
+  },
+  {
+    id: 'gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro Preview',
+    capability: 'CHAT',
+    badge: 'Flagship Reasoning',
+    description: 'Suy luận chuyên sâu, kiến trúc hệ thống, phân tích dữ liệu GIS & thuật toán.'
+  },
+  {
+    id: 'gemini-3.1-flash-tts-preview',
+    name: 'Gemini 3.1 Flash TTS',
+    capability: 'TTS',
+    badge: 'Voice Synthesis',
+    description: 'Chuyển văn bản thành giọng nói tự nhiên với các giọng đọc Puck, Aoede, Kore...'
+  },
+
+  // ---- Google AI Studio (offline fallback; the live list comes from the API) ----
+  {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    capability: 'CHAT',
+    badge: 'Default • Balanced',
+    description: 'Cân bằng hoàn hảo giữa tốc độ phản hồi và chất lượng suy luận. Model mặc định.',
+    providers: ['aistudio']
+  },
+  {
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash Lite',
+    capability: 'CHAT',
+    badge: 'Ultra Fast',
+    description: 'Siêu nhẹ, phản hồi tức thì cho các tác vụ tóm tắt và dịch thuật.',
+    providers: ['aistudio']
+  },
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    capability: 'CHAT',
+    badge: 'Pro Stable',
+    description: 'Model Pro với cửa sổ ngữ cảnh lớn; có thể không còn mở cho tài khoản mới.',
+    providers: ['aistudio']
+  },
   {
     id: 'gemini-flash-latest',
     name: 'Gemini Flash (Latest)',
@@ -18,77 +142,12 @@ export const DEFAULT_MODELS: AIModel[] = [
     providers: ['aistudio']
   },
   {
-    id: 'gemini-3-flash-preview',
-    name: 'Gemini 3 Flash Preview',
-    capability: 'CHAT',
-    badge: 'Default • Fast',
-    description: 'Model mặc định tốc độ cao, tối ưu cho hội thoại đa phương thức & coding.'
-  },
-  {
-    id: 'gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro Preview',
-    capability: 'CHAT',
-    badge: 'Flagship Reasoning',
-    description: 'Suy luận chuyên sâu, kiến trúc hệ thống, phân tích dữ liệu GIS & thuật toán.'
-  },
-  {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
-    capability: 'CHAT',
-    badge: 'Pro Stable',
-    description: 'Model Pro ổn định với cửa sổ ngữ cảnh lớn và độ chính xác cao.'
-  },
-  {
-    id: 'gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
-    capability: 'CHAT',
-    badge: 'Default • Balanced',
-    description: 'Cân bằng hoàn hảo giữa tốc độ phản hồi và chất lượng suy luận. Model mặc định.'
-  },
-  {
-    id: 'gemini-2.5-flash-lite',
-    name: 'Gemini 2.5 Flash Lite',
-    capability: 'CHAT',
-    badge: 'Ultra Fast',
-    description: 'Siêu nhẹ, phản hồi tức thì cho các tác vụ tóm tắt và dịch thuật.'
-  },
-  {
-    id: 'gemini-3.1-flash-image-preview',
-    name: 'Gemini 3.1 Flash Image',
+    id: 'gemini-2.5-flash-image',
+    name: 'Gemini 2.5 Flash Image',
     capability: 'IMAGE',
     badge: 'Image Gen',
-    description: 'Tạo và biến đổi hình ảnh chất lượng cao (Text-to-Image & Image-to-Image).'
-  },
-  {
-    id: 'imagen-3.0-generate-002',
-    name: 'Imagen 3.0 Generate',
-    capability: 'IMAGE',
-    badge: 'Photoreal',
-    description: 'Mô hình chuyên dụng tạo ảnh nghệ thuật và chân thực của Google.',
-    providers: ['vertex']
-  },
-  {
-    id: 'veo-3.1-lite-generate-001',
-    name: 'Veo 3.1 Lite Video (LRO)',
-    capability: 'VIDEO',
-    badge: 'Video LRO',
-    description: 'Tạo video 16:9 bất đồng bộ (Long-Running Operation) qua Vertex AI.',
-    providers: ['vertex']
-  },
-  {
-    id: 'veo-3.0-generate-preview',
-    name: 'Veo 3.0 Generate Preview',
-    capability: 'VIDEO',
-    badge: 'Cinema Video',
-    description: 'Tạo chuyển động điện ảnh chất lượng cao từ mô tả văn bản.',
-    providers: ['vertex']
-  },
-  {
-    id: 'gemini-3.1-flash-tts-preview',
-    name: 'Gemini 3.1 Flash TTS',
-    capability: 'TTS',
-    badge: 'Voice Synthesis',
-    description: 'Chuyển văn bản thành giọng nói tự nhiên với các giọng đọc Puck, Aoede, Kore...'
+    description: 'Tạo và biến đổi hình ảnh (Text-to-Image & Image-to-Image).',
+    providers: ['aistudio']
   },
 ];
 

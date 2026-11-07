@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Conversation, Message, AIModel, AppSettings } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 import { PERSONAS } from '../constants/personas';
+import { DEFAULT_MODEL_BY_PROVIDER } from '../constants/models';
 
 interface ChatState {
   conversations: Conversation[];
@@ -59,7 +60,7 @@ export const useChatStore = create<ChatState>()(
         enableStreaming: true,
         imageAspectRatio: '1:1',
       },
-      activeModelId: 'gemini-2.5-flash',
+      activeModelId: DEFAULT_MODEL_BY_PROVIDER.aistudio,
       remoteModels: [],
       remoteModelsAt: null,
       isHydrated: false,
@@ -213,7 +214,10 @@ export const useChatStore = create<ChatState>()(
       removeCustomModel: (id) =>
         set((state) => ({
           customModels: state.customModels.filter((m) => m.id !== id),
-          activeModelId: state.activeModelId === id ? 'gemini-2.5-flash' : state.activeModelId,
+          activeModelId:
+            state.activeModelId === id
+              ? DEFAULT_MODEL_BY_PROVIDER[state.settings.provider ?? 'aistudio']
+              : state.activeModelId,
           lastSavedAt: Date.now(),
         })),
 

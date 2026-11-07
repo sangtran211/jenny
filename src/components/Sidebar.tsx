@@ -20,7 +20,7 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-export function Sidebar({ isOpen }: SidebarProps) {
+export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
   const {
     conversations,
     activeConversationId,
@@ -114,11 +114,18 @@ export function Sidebar({ isOpen }: SidebarProps) {
     })
     .sort((a, b) => (a.pinned === b.pinned ? b.updatedAt - a.updatedAt : a.pinned ? -1 : 1));
 
+  // Below the lg breakpoint the sidebar is a drawer over the chat, so close it after a choice.
+  const closeOnMobile = () => {
+    if (window.matchMedia('(max-width: 1023px)').matches) onCloseMobile?.();
+  };
+
   return (
-    <aside className="w-72 border-r border-border bg-surface flex flex-col h-full shrink-0">
+    <>
+    <div onClick={onCloseMobile} className="fixed inset-0 z-30 bg-black/60 lg:hidden" aria-hidden="true" />
+    <aside className="fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] border-r border-border bg-surface flex flex-col h-full lg:static lg:z-auto lg:max-w-none shrink-0">
       <div className="p-3.5 space-y-2.5 border-b border-border">
         <button
-          onClick={() => createConversation()}
+          onClick={() => { createConversation(); closeOnMobile(); }}
           className="w-full flex items-center justify-center gap-2 bg-primary text-background font-medium py-2.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
         >
           <Plus size={17} />
@@ -151,7 +158,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 ? 'bg-background border-border text-primary'
                 : 'border-transparent text-muted hover:bg-background/50 hover:text-primary'
             )}
-            onClick={() => setActiveConversation(conv.id)}
+            onClick={() => { setActiveConversation(conv.id); closeOnMobile(); }}
           >
             <div className="flex items-center gap-2 overflow-hidden flex-1">
               <MessageSquare size={15} className={cn('shrink-0', conv.pinned ? 'text-accent-terracotta' : 'text-muted')} />
@@ -160,7 +167,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 <div className="text-[10px] text-muted">{conv.messages.length} tin • {format(conv.updatedAt, 'HH:mm dd/MM')}</div>
               </div>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+            <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 shrink-0">
               <button onClick={(e) => { e.stopPropagation(); togglePinConversation(conv.id); }} className="p-1 hover:text-accent-terracotta" title="Ghim">
                 <Pin size={13} />
               </button>
@@ -204,6 +211,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }
 

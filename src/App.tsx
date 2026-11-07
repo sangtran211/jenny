@@ -9,7 +9,10 @@ import { useModelCatalogSync } from './hooks/useModels';
 function App() {
   const { isHydrated } = useChatStore();
   useModelCatalogSync();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Open by default on desktop; on a phone it is a drawer over the chat, so start closed.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches
+  );
 
   if (!isHydrated) {
     return (
@@ -20,7 +23,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-primary">
+    <div className="flex h-dvh overflow-hidden bg-background text-primary">
       <Sidebar isOpen={sidebarOpen} onCloseMobile={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col relative min-w-0">
         <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
