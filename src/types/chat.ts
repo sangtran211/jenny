@@ -1,10 +1,17 @@
 export type ModelCapability = 'CHAT' | 'IMAGE' | 'VIDEO' | 'TTS';
 
+export type ModelTier = 'DAILY' | 'REASONING' | 'LITE' | 'IMAGE' | 'TTS' | 'VIDEO';
+
 export interface AIModel {
   id: string;
   name: string;
   capability: ModelCapability;
+  tier?: ModelTier;
   description?: string;
+  bestFor?: string; // Khi nào nên chọn / tác dụng chính
+  speed?: string; // Tốc độ phản hồi (VD: Tức thì, Nhanh, Trung bình, Chậm (~30s))
+  intelligence?: string; // Mức độ suy luận (VD: Tiêu chuẩn, Cao, Chuyên sâu, Thế hệ 4)
+  note?: string; // Lưu ý vận hành thực tế
   badge?: string;
   isCustom?: boolean;
   providers?: ApiProvider[]; // which providers offer it; undefined = both
@@ -46,7 +53,7 @@ export interface Persona {
 }
 
 export interface AppSettings {
-  provider?: ApiProvider; // undefined (settings saved before this field existed) is treated as 'aistudio'
+  provider?: ApiProvider; // default is 'vertex'
   aiStudioApiKey?: string;
   customApiKey: string;
   projectId: string;

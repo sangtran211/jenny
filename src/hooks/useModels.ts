@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useChatStore } from './useChatStore';
-import { DEFAULT_MODELS, DEFAULT_MODEL_BY_PROVIDER } from '../constants/models';
+import { DEFAULT_MODELS, DEFAULT_MODEL_BY_PROVIDER, DEFAULT_PROVIDER } from '../constants/models';
 import { listAiStudioModels } from '../services/jennyApi';
 import { toAiStudioModel } from '../services/modelCatalog';
 import type { AIModel } from '../types/chat';
@@ -12,7 +12,7 @@ const CATALOG_TTL_MS = 6 * 60 * 60 * 1000;
 // built-in list. Custom models the user added by id are always included.
 export function useModels() {
   const { settings, customModels, remoteModels, activeModelId } = useChatStore();
-  const provider = settings.provider ?? 'aistudio';
+  const provider = settings.provider ?? DEFAULT_PROVIDER;
 
   const builtIn: AIModel[] =
     provider === 'aistudio' && remoteModels.length > 0
@@ -33,7 +33,7 @@ export function useModels() {
 // A failed fetch keeps whatever is cached, so the app still works offline or when Google is flaky.
 export function useModelCatalogSync() {
   const { settings, remoteModelsAt, setRemoteModels } = useChatStore();
-  const provider = settings.provider ?? 'aistudio';
+  const provider = settings.provider ?? DEFAULT_PROVIDER;
   const firstRun = useRef(true);
 
   useEffect(() => {

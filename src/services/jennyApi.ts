@@ -2,16 +2,16 @@ import { AppSettings, Message } from '../types/chat';
 import type { RawAiStudioModel } from './modelCatalog';
 import { fetchWithRetry } from './http';
 import { buildApiError } from './apiErrors';
+import { DEFAULT_PROVIDER } from '../constants/models';
 
 interface ApiContext {
   settings: AppSettings;
 }
 
-const DEFAULT_FALLBACK_KEY = 'YOUR_DEFAULT_FALLBACK_KEY_HERE'; // Replace with your actual default fallback key if needed
-
 const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
-const isAiStudio = (settings: AppSettings) => (settings.provider ?? 'aistudio') === 'aistudio';
+
+const isAiStudio = (settings: AppSettings) => (settings.provider ?? DEFAULT_PROVIDER) === 'aistudio';
 
 const isLocalhost = () =>
   typeof window !== 'undefined' &&
@@ -46,8 +46,8 @@ const throwApiError = async (res: Response): Promise<never> => {
 const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) => {
   const customKey =
     settings.customApiKey?.trim() ||
-    import.meta.env.VITE_JENNY_API_KEY ||
-    DEFAULT_FALLBACK_KEY;
+    import.meta.env.VITE_JENNY_API_KEY?.trim() ||
+    '';
 
   if (isLocalhost() && customKey) {
     return {
@@ -68,6 +68,7 @@ const getProxyOrDirectBaseUrl = (settings: AppSettings, isUsCentral: boolean) =>
       : 'https://aiplatform.googleapis.com/v1',
   };
 };
+
 
 // Lists the models the AI Studio key can use. Same key/proxy routing as generation requests.
 export const listAiStudioModels = async (settings: AppSettings): Promise<RawAiStudioModel[]> => {
@@ -155,9 +156,9 @@ const executeRequest = async (
         throw buildApiError(res.status, err.error || `API Error (Status ${res.status})`);
       }
     } catch (proxyErr: any) {
-      // With only the placeholder key there is nothing useful to retry directly.
-      if (!key || key === DEFAULT_FALLBACK_KEY || !directFallbackUrl) throw proxyErr;
+      if (!key || !directFallbackUrl) throw proxyErr;
     }
+
   }
 
   const targetBase = directFallbackUrl || baseUrl;
@@ -239,8 +240,9 @@ export const generateText = async (
   const customKey = useAiStudio
     ? getAiStudioKey(context.settings)
     : context.settings.customApiKey?.trim() ||
-      import.meta.env.VITE_JENNY_API_KEY ||
-      DEFAULT_FALLBACK_KEY;
+      import.meta.env.VITE_JENNY_API_KEY?.trim() ||
+      '';
+
 
   if (context.settings.enableStreaming && onStreamChunk && customKey) {
     try {
@@ -353,6 +355,42 @@ export const generateImage = async (
 };
 
 
+const pcm16Base64ToWavDataUri = (base64Pcm: string, sampleRate = 24000): string => {
+  const binary = atob(base64Pcm);
+  const pcmLen = binary.length;
+  const wavBuffer = new ArrayBuffer(44 + pcmLen);
+  const view = new DataView(wavBuffer);
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + pcmLen, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true); // PCM chunk size
+  view.setUint16(20, 1, true); // PCM format = 1
+  view.setUint16(22, 1, true); // Mono = 1 channel
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true); // byte rate (sampleRate * blockAlign)
+  view.setUint16(32, 2, true); // block align (1 channel * 2 bytes)
+  view.setUint16(34, 16, true); // bits per sample
+  writeStr(36, 'data');
+  view.setUint32(40, pcmLen, true);
+
+  const bytes = new Uint8Array(wavBuffer);
+  for (let i = 0; i < pcmLen; i++) {
+    bytes[44 + i] = binary.charCodeAt(i);
+  }
+
+  let outBinary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    outBinary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return `data:audio/wav;base64,${btoa(outBinary)}`;
+};
+
 export const generateTTS = async (prompt: string, model: string, context: ApiContext) => {
   const endpointPath = `${getModelPath(model, context.settings)}:generateContent`;
   
@@ -370,9 +408,15 @@ export const generateTTS = async (prompt: string, model: string, context: ApiCon
   const audioPart = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
   
   if (!audioPart || !audioPart.data) throw new Error('AI response did not contain valid audio data.');
-  const mimeType = audioPart.mimeType || 'audio/mp3';
+  const mimeType: string = audioPart.mimeType || 'audio/mp3';
+  if (/audio\/l16|audio\/pcm/i.test(mimeType)) {
+    const rateMatch = mimeType.match(/rate=(\d+)/i);
+    const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+    return pcm16Base64ToWavDataUri(audioPart.data, rate);
+  }
   return `data:${mimeType};base64,${audioPart.data}`;
 };
+
 
 export const initiateVideoGen = async (prompt: string, model: string, context: ApiContext) => {
   if (isAiStudio(context.settings)) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
 import { useChatStore } from '../hooks/useChatStore';
-import { TTS_VOICES } from '../constants/models';
+import { TTS_VOICES, DEFAULT_PROVIDER } from '../constants/models';
 import { PERSONAS, CUSTOM_PERSONA_ID } from '../constants/personas';
 import type { ApiProvider } from '../types/chat';
 
@@ -50,12 +50,12 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             <div>
               <label className="block text-xs uppercase tracking-wider text-muted mb-1">Nhà cung cấp API</label>
               <select
-                value={form.provider ?? 'aistudio'}
+                value={form.provider ?? DEFAULT_PROVIDER}
                 onChange={(e) => setForm({ ...form, provider: e.target.value as ApiProvider })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta"
               >
+                <option value="vertex">Vertex AI (Mặc định)</option>
                 <option value="aistudio">Google AI Studio (API key)</option>
-                <option value="vertex">Vertex AI</option>
               </select>
             </div>
 

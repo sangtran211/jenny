@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Conversation, Message, AIModel, AppSettings } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 import { PERSONAS } from '../constants/personas';
-import { DEFAULT_MODEL_BY_PROVIDER } from '../constants/models';
+import { DEFAULT_MODEL_BY_PROVIDER, DEFAULT_PROVIDER } from '../constants/models';
 
 interface ChatState {
   conversations: Conversation[];
@@ -50,7 +50,7 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       customModels: [],
       settings: {
-        provider: 'aistudio',
+        provider: DEFAULT_PROVIDER,
         aiStudioApiKey: '',
         customApiKey: '',
         projectId: 'no-coop-300usd-project',
@@ -60,7 +60,7 @@ export const useChatStore = create<ChatState>()(
         enableStreaming: true,
         imageAspectRatio: '1:1',
       },
-      activeModelId: DEFAULT_MODEL_BY_PROVIDER.aistudio,
+      activeModelId: DEFAULT_MODEL_BY_PROVIDER[DEFAULT_PROVIDER],
       remoteModels: [],
       remoteModelsAt: null,
       isHydrated: false,
@@ -216,7 +216,7 @@ export const useChatStore = create<ChatState>()(
           customModels: state.customModels.filter((m) => m.id !== id),
           activeModelId:
             state.activeModelId === id
-              ? DEFAULT_MODEL_BY_PROVIDER[state.settings.provider ?? 'aistudio']
+              ? DEFAULT_MODEL_BY_PROVIDER[state.settings.provider ?? DEFAULT_PROVIDER]
               : state.activeModelId,
           lastSavedAt: Date.now(),
         })),
@@ -226,10 +226,19 @@ export const useChatStore = create<ChatState>()(
       setRemoteModels: (models) => set({ remoteModels: models, remoteModelsAt: Date.now() }),
 
       updateSettings: (newSettings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings },
-          lastSavedAt: Date.now(),
-        })),
+        set((state) => {
+          const nextProvider = newSettings.provider ?? state.settings.provider ?? DEFAULT_PROVIDER;
+          const prevProvider = state.settings.provider ?? DEFAULT_PROVIDER;
+          const nextActiveModelId =
+            newSettings.provider && nextProvider !== prevProvider
+              ? DEFAULT_MODEL_BY_PROVIDER[nextProvider]
+              : state.activeModelId;
+          return {
+            settings: { ...state.settings, ...newSettings },
+            activeModelId: nextActiveModelId,
+            lastSavedAt: Date.now(),
+          };
+        }),
 
       saveSnapshotNow: () => {
         const current = get();
@@ -292,7 +301,24 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'jenny-chat-storage',
+      version: 1,
       storage: createJSONStorage(() => localStorage),
+      migrate: (persistedState: any, version: number) => {
+        if (!persistedState || typeof persistedState !== 'object') return persistedState;
+        if (version < 1) {
+          return {
+            ...persistedState,
+            settings: {
+              ...(persistedState.settings || {}),
+              provider: DEFAULT_PROVIDER,
+            },
+            activeModelId: DEFAULT_MODEL_BY_PROVIDER[DEFAULT_PROVIDER],
+            remoteModels: [],
+            remoteModelsAt: null,
+          };
+        }
+        return persistedState;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.setHydrated();

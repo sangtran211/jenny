@@ -45,7 +45,7 @@ export function ChatViewport() {
     try {
       const audioUri = await generateTTS(
         text.slice(0, 600),
-        'gemini-3.1-flash-tts-preview',
+        'gemini-3.8-flash-tts',
         { settings }
       );
       const audio = new Audio(audioUri);
@@ -81,10 +81,15 @@ export function ChatViewport() {
       <div className="max-w-4xl mx-auto space-y-6">
         {messages.length === 0 && (
           <div className="py-8 sm:py-12">
-            <div className="max-w-xl mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-terracotta/15 border border-accent-terracotta/30 text-accent-terracotta text-xs font-mono mb-3">
+            <div className="max-w-2xl mb-6">
+              <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-accent-terracotta/15 border border-accent-terracotta/30 text-accent-terracotta text-xs font-mono mb-3">
                 <Sparkles size={13} />
                 <span>JENNY AI • {activeModel.name}</span>
+                {activeModel.badge && (
+                  <span className="px-1.5 py-0.5 rounded bg-background/80 text-[10px] text-primary">
+                    {activeModel.badge}
+                  </span>
+                )}
               </div>
               <h1 className="font-serif text-3xl sm:text-5xl text-primary tracking-tight leading-tight mb-2">
                 Xin chào, tôi là Jenny.
@@ -92,6 +97,33 @@ export function ChatViewport() {
               <p className="text-sm text-muted leading-relaxed">
                 Không gian làm việc AI đa phương thức tích hợp Gemini, Imagen, Veo LRO và giọng nói TTS. Lịch sử chat được tự động lưu theo máy và hỗ trợ Export/Import linh hoạt.
               </p>
+
+              {(activeModel.bestFor || activeModel.description) && (
+                <div className="mt-4 p-3.5 rounded-xl bg-surface/80 border border-border text-xs space-y-1">
+                  <div className="flex flex-wrap items-center gap-2 text-primary font-medium">
+                    <span>Đang chọn: {activeModel.name}</span>
+                    {activeModel.speed && (
+                      <span className="px-2 py-0.5 rounded bg-background border border-border text-[11px] text-accent-sage">
+                        Tốc độ: {activeModel.speed}
+                      </span>
+                    )}
+                    {activeModel.intelligence && (
+                      <span className="px-2 py-0.5 rounded bg-background border border-border text-[11px] text-accent-terracotta">
+                        Trí tuệ: {activeModel.intelligence}
+                      </span>
+                    )}
+                  </div>
+                  {activeModel.bestFor && (
+                    <div className="text-primary/90">
+                      <span className="text-accent-sage font-medium">Tác dụng chính: </span>
+                      {activeModel.bestFor}
+                    </div>
+                  )}
+                  {activeModel.description && (
+                    <div className="text-muted">{activeModel.description}</div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
