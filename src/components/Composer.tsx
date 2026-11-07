@@ -200,8 +200,9 @@ export function Composer() {
             );
           })}
         </div>
-        <span className="text-[11px] font-mono text-muted hidden sm:inline">
-          Model: <strong className="text-primary">{activeModel.id}</strong>
+        <span className="text-[11px] text-muted hidden sm:inline truncate max-w-[380px]">
+          <strong className="text-primary font-mono">{activeModel.name}</strong>
+          {activeModel.bestFor ? ` — ${activeModel.bestFor}` : ` (${activeModel.id})`}
         </span>
       </div>
 

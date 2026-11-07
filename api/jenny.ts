@@ -1,10 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const DEFAULT_FALLBACK_KEY = 'YOUR_DEFAULT_FALLBACK_KEY_HERE'; // Replace with your actual default fallback key if needed
-
 const AI_STUDIO_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 // Only content generation on a model id is relayed, so the shared key cannot be used for anything else.
 const AI_STUDIO_ALLOWED_PATH = /^models\/[A-Za-z0-9._-]+:generateContent$/;
+// Vertex allowlist: publishers/google/models/<id>:generateContent or projects/<id>/locations/us-central1/publishers/google/models/<id>:(predictLongRunning|fetchPredictOperation)
+const VERTEX_ALLOWED_PATH =
+  /^(publishers\/google\/models\/[A-Za-z0-9._-]+:generateContent|projects\/[A-Za-z0-9._-]+\/locations\/us-central1\/publishers\/google\/models\/[A-Za-z0-9._-]+:(predictLongRunning|fetchPredictOperation))$/;
+
 
 async function handleAiStudio(
   endpointPath: unknown,
@@ -63,15 +65,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handleAiStudio(endpointPath, payload, method, res);
   }
 
+  if (typeof endpointPath !== 'string' || !VERTEX_ALLOWED_PATH.test(endpointPath)) {
+    return res.status(400).json({ error: 'Vertex endpointPath not allowed' });
+  }
+
   const apiKey =
-    customApiKey ||
-    process.env.JENNY_API_KEY ||
-    process.env.VITE_JENNY_API_KEY ||
-    DEFAULT_FALLBACK_KEY;
+    (typeof customApiKey === 'string' && customApiKey.trim()) ||
+    process.env.JENNY_API_KEY?.trim() ||
+    process.env.VITE_JENNY_API_KEY?.trim();
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'Server is missing JENNY_API_KEY' });
+    return res.status(500).json({
+      error:
+        'Server chưa nhận được JENNY_API_KEY. Nếu bạn vừa thêm biến môi trường trên Vercel, hãy vào tab Deployments → bấm Redeploy để biến có hiệu lực.',
+    });
   }
+
 
   const isUsCentral = endpointPath.includes('locations/us-central1');
   const baseUrl = isUsCentral
