@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useChatStore } from './useChatStore';
-import { DEFAULT_MODELS } from '../constants/models';
+import { DEFAULT_MODELS, DEFAULT_MODEL_BY_PROVIDER } from '../constants/models';
 import { listAiStudioModels } from '../services/jennyApi';
 import { toAiStudioModel } from '../services/modelCatalog';
 import type { AIModel } from '../types/chat';
 
 const CATALOG_TTL_MS = 6 * 60 * 60 * 1000;
-const FALLBACK_MODEL_ID = 'gemini-2.5-flash';
 
 // The models offered for the current provider. AI Studio uses the catalog fetched from the API
 // (so it follows what the key can really use); Vertex has no key-based listing, so it uses the
@@ -23,7 +22,7 @@ export function useModels() {
   const allModels = [...builtIn, ...customModels];
   const activeModel =
     allModels.find((m) => m.id === activeModelId) ??
-    allModels.find((m) => m.id === FALLBACK_MODEL_ID) ??
+    allModels.find((m) => m.id === DEFAULT_MODEL_BY_PROVIDER[provider]) ??
     allModels[0] ??
     DEFAULT_MODELS[0];
 
