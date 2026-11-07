@@ -96,8 +96,8 @@ const inferMetadata = (
       badge: 'Suy luận sâu',
       speed: 'Trung bình',
       intelligence: 'Chuyên sâu',
-      bestFor: 'Bài toán phức tạp, kiến trúc hệ thống, phân tích chuyên sâu',
-      description: 'Model chuyên suy luận nhiều bước cho tác vụ kỹ thuật khó.',
+      bestFor: 'Phân tích chuyên sâu, lập kế hoạch chi tiết và giải quyết vấn đề phức tạp',
+      description: 'Model chuyên suy luận nhiều bước cho các yêu cầu đòi hỏi chiều sâu.',
     };
   }
   if (/gemma/.test(id)) {
@@ -106,8 +106,8 @@ const inferMetadata = (
       badge: 'Open Model • 31B',
       speed: 'Nhanh',
       intelligence: 'Tiêu chuẩn',
-      bestFor: 'Chạy thử nghiệm mô hình mở Gemma 4 31B gọn nhẹ, hạn mức thoải mái',
-      description: 'Mô hình mở Gemma 4 31B Instruct của Google, phù hợp hỏi đáp & viết lách nhẹ.',
+      bestFor: 'Trò chuyện, hỏi đáp và soạn thảo văn bản nhẹ nhàng với hạn mức thoải mái',
+      description: 'Mô hình mở Gemma 4 31B Instruct của Google, phù hợp hỏi đáp & viết lách hàng ngày.',
     };
   }
   if (/omni/.test(id)) {
@@ -123,10 +123,10 @@ const inferMetadata = (
   const tier: ModelTier = 'DAILY';
   return {
     tier,
-    badge: 'Đa dụng • Flash',
+    badge: 'Đa năng • Flash',
     speed: 'Nhanh',
     intelligence: 'Cao',
-    bestFor: 'Hội thoại hàng ngày, lập trình và xử lý văn bản',
+    bestFor: 'Trò chuyện hàng ngày, soạn thảo nội dung, dịch thuật và giải đáp đa lĩnh vực',
   };
 };
 

@@ -41,8 +41,8 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           <div className="p-3 rounded-xl bg-accent-sage/10 border border-accent-sage/30 flex items-start gap-2.5 text-xs text-primary">
             <ShieldCheck size={16} className="text-accent-sage shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-accent-sage">Đã nạp sẵn API Key:</span>{' '}
-              Tích hợp key từ <code className="font-mono">key.md</code> và Vercel Proxy <code className="font-mono">/api/jenny</code>.
+              <span className="font-semibold text-accent-sage">Kết nối mặc định sẵn sàng:</span>{' '}
+              Hệ thống đã được cấu hình sẵn để bạn sử dụng ngay. Bạn cũng có thể nhập API Key riêng bên dưới nếu muốn dùng hạn mức cá nhân.
             </div>
           </div>
 

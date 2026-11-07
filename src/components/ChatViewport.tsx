@@ -95,7 +95,7 @@ export function ChatViewport() {
                 Xin chào, tôi là Jenny.
               </h1>
               <p className="text-sm text-muted leading-relaxed">
-                Không gian làm việc AI đa phương thức tích hợp Gemini, Imagen, Veo LRO và giọng nói TTS. Lịch sử chat được tự động lưu theo máy và hỗ trợ Export/Import linh hoạt.
+                Trợ lý AI đa năng đồng hành cùng bạn trong công việc, học tập và sáng tạo: trò chuyện thông minh, soạn thảo văn bản, tạo hình ảnh, dựng video và chuyển văn bản thành giọng nói tự nhiên.
               </p>
 
               {(activeModel.bestFor || activeModel.description) && (
