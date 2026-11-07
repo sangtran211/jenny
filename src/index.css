@@ -22,3 +22,25 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted;
 }
+
+/* Ensure markdown code blocks and tables scroll horizontally inside chat bubbles without overflowing */
+.prose pre {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+}
+
+.prose pre code {
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+}
+

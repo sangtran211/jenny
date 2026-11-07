@@ -117,12 +117,12 @@ export function Composer() {
         });
       } else if (activeModel.capability === 'VIDEO') {
         updateMessage(convId, placeholderId, {
-          text: 'Đang khởi tạo tiến trình tạo video Veo (LRO)...',
+          text: 'Đang khởi tạo tiến trình dựng video Veo...',
           isStreaming: true,
         });
         const opName = await initiateVideoGen(userText, activeModel.id, context);
         updateMessage(convId, placeholderId, {
-          text: `Tiến trình LRO đã bắt đầu (\`${opName}\`). Đang chờ kết xuất video...`,
+          text: 'Đang dựng video Veo (quá trình này thường mất khoảng 30–60 giây)...',
           isStreaming: true,
         });
 
@@ -171,10 +171,10 @@ export function Composer() {
   };
 
   const modes: { cap: ModelCapability; label: string; icon: React.ReactNode }[] = [
-    { cap: 'CHAT', label: 'Chat & Vision', icon: <MessageSquare size={13} /> },
+    { cap: 'CHAT', label: 'Trò chuyện', icon: <MessageSquare size={13} /> },
     { cap: 'IMAGE', label: 'Tạo Ảnh', icon: <ImageIcon size={13} /> },
-    { cap: 'VIDEO', label: 'Video Veo (LRO)', icon: <Video size={13} /> },
-    { cap: 'TTS', label: 'Giọng Nói TTS', icon: <Volume2 size={13} /> },
+    { cap: 'VIDEO', label: 'Tạo Video', icon: <Video size={13} /> },
+    { cap: 'TTS', label: 'Giọng Nói', icon: <Volume2 size={13} /> },
   ];
 
   return (
